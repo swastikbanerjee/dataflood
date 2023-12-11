@@ -1,0 +1,170 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings("ignore")
+data = pd.read_csv("/content/data - data.csv")
+data.shape
+data.head()
+data.info()
+data.describe()
+data.isnull().sum()
+data.dtypes
+df1 = data #data type object (an instance of numpy. dtype class)
+df1['price'] = df1['price'].astype(int)
+#df1.drop_duplicates()
+plt.figure(figsize=(8,8))
+sns.heatmap(df1.corr(),annot=True,linewidths=2,fmt=".2f") #High degree: If the coefficient value lies between ± 0.50 and ± 1, then it is said to be a strong correlation. Moderate degree: If the value lies between ± 0.30 and ± 0.49, then it is said to be a medium correlation. Low degree: When the value lies below + . 29, then it is said to be a small correlation.
+plt.title("Correlation among all the attributes")
+plt.show()
+#df1.hist('price')
+plt.plot(df1['price'],df1['yr_built']) #line plot
+plt.scatter(df1['price'],df1['yr_built']) #scatter plot
+plt.xlabel("price")
+plt.ylabel("yr_built")
+plt.xticks(rotation=90)
+plt.yticks(rotation=180)
+plt.title("Scatter Plot")
+plt.show()
+df1['yr_built'].max()
+plt.hist(df1['yr_built'],bins=10) #histogram #or df1.hist('price')
+ticks=[1900,1925,1950,1975,2000]
+#labels=['1900','1910','1920','1930','1940','1950','1960','1970','1980','1990','2014']
+plt.xticks(ticks)
+plt.show()
+#sns.boxplot(x=df1[''])
+#sns.pairplot(df1)
+df1['condition'].nunique()
+df1['condition']
+condition_counts = df1['condition'].value_counts()
+condition_counts
+plt.figure(figsize=(5,8))
+labels=['Excellent','Very Good','Good','Satisfactory','Poor']
+plt.pie(condition_counts,labels=labels,autopct='%1.1f%%')
+plt.show()
+# Define bin boundaries and calculate bin means
+bin_boundaries = np.linspace(min(df1['condition']), max(df1['condition']), 11)  # 10 bins
+bin_means = [np.mean(df1['condition'][(df1['condition'] >= bin_start) & (df1['condition'] < bin_end)]) for bin_start, bin_end in zip(bin_boundaries[:-1], bin_boundaries[1:])]
+
+# Visualize the binned data
+plt.hist(df1['condition'], bins=bin_boundaries, edgecolor='black')
+plt.title('Binned Data with Mean Values')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.show()
+# Define bin boundaries and calculate bin means
+bin_boundaries = np.linspace(min(df1['condition']), max(df1['condition']), 11)  # 10 bins
+bin_means = [np.mean(df1['condition'][(df1['condition'] >= bin_start) & (df1['condition'] < bin_end)]) for bin_start, bin_end in zip(bin_boundaries[:-1], bin_boundaries[1:])]
+
+# Visualize both bin_means and bin_boundaries
+plt.hist(df1['condition'], bins=bin_boundaries, edgecolor='black', alpha=0.5, label='Bin Boundaries')
+plt.scatter(bin_boundaries[:-1] + np.diff(bin_boundaries) / 2, bin_means, color='red', marker='o', label='Bin Means')
+plt.title('Binned Data with Mean Values')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.legend()
+plt.show()
+df1.columns
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+scaler_minmax = MinMaxScaler()
+df1['MinMax_Normalized_sqft_above'] = scaler_minmax.fit_transform(df1[['sqft_above']])
+df1.head()
+scaler_zscore= StandardScaler()
+df1['Standardized_sqft_above'] = scaler_zscore.fit_transform(df1[['sqft_above']])
+df1.head()
+# from sklearn.preprocessing import LabelEncoder
+
+# # Sample categorical data
+# categories = ['cat', 'dog', 'bird', 'cat', 'dog']
+
+# # Initialize the label encoder
+# label_encoder = LabelEncoder()
+
+# # Fit and transform the data
+# encoded_data = label_encoder.fit_transform(categories)
+
+# # Perform one-hot encoding
+# one_hot_encoded = pd.get_dummies(df['Animal'], prefix='Animal')
+
+# # Concatenate the one-hot encoded data with the original DataFrame
+# df_encoded = pd.concat([df, one_hot_encoded], axis=1)
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.decomposition import PCA
+
+
+categorical_columns = ['city', 'country']
+numerical_columns = ['condition', 'sqft_lot', 'sqft_living', 'bathrooms', 'bedrooms', 'price']
+
+X_categorical = df1[categorical_columns]
+X_numerical = df1[numerical_columns]
+
+# X_categorical_encoded = pd.get_dummies(categorical_columns)
+encoder = OneHotEncoder()
+X_categorical_encoded = encoder.fit_transform(X_categorical)
+
+scaler = StandardScaler()
+X_numerical_scaled = scaler.fit_transform(X_numerical)
+
+X_scaled = np.hstack((X_categorical_encoded.toarray(), X_numerical_scaled))
+
+plt.scatter(*PCA(n_components=2).fit_transform(StandardScaler().fit_transform(X_scaled)).T)
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.title('PCA - First Two Principal Components')
+plt.show()
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+
+# Assuming X_combined is your data after encoding and scaling
+encoder = OneHotEncoder()
+X_categorical_encoded = encoder.fit_transform(X_categorical)
+
+scaler = StandardScaler()
+X_numerical_scaled = scaler.fit_transform(X_numerical)
+
+X_combined = np.hstack((X_categorical_encoded.toarray(), X_numerical_scaled))
+
+# Perform PCA
+pca = PCA()
+X_pca = pca.fit_transform(X_combined)
+
+# Plot explained variance ratio
+plt.plot(np.cumsum(pca.explained_variance_ratio_))
+plt.xlabel('Number of Principal Components')
+plt.ylabel('Cumulative Explained Variance')
+plt.title('Explained Variance by Principal Components')
+plt.show()
+Steepness of the Curve:
+
+The steeper the curve, the more information each additional principal component is adding. An abrupt change in slope (an "elbow") may suggest a point where adding more components provides diminishing returns in terms of explaining variance.
+Percentage of Explained Variance:
+
+The y-axis values indicate the cumulative percentage of variance explained. A common goal is to retain a certain percentage of the total variance (e.g., 95% or 99%). You can choose the number of principal components that achieve your desired level of explained variance.
+Ideal Number of Components:
+
+The point where the curve begins to flatten may represent an optimal number of components to retain. This is often referred to as the "elbow" of the curve.
+# df1['filed_complaint'].fillna(0,inplace=True)
+# from sklearn.tree import DecisionTreeRegressor
+# reg = DecisionTreeRegressor(random_state=33)
+# reg.fit(X_train, y_train)
+# from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error
+
+# y_pred = reg.predict(X_test)
+# y_pred_int = y_pred.astype(int)
+# y_test.replace({'Employed':1,'Left':0},inplace=True)
+# # Calculate evaluation metrics
+# mae = mean_absolute_error(y_test, y_pred_int)
+# mse = mean_squared_error(y_test, y_pred_int)
+# rmse = mean_squared_error(y_test, y_pred_int, squared=False)
+# r2 = r2_score(y_test, y_pred_int)
+# mape = mean_absolute_percentage_error(y_test, y_pred_int)
+
+# # Print the metrics
+# print(f'Mean Absolute Error: {mae}')
+# print(f'Mean Squared Error: {mse}')
+# print(f'Root Mean Squared Error: {rmse}')
+# print(f'R-squared Score: {r2}')
+# print(f'Mean Absolute Percentage Error: {mape}')
